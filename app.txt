@@ -1,0 +1,264 @@
+import streamlit as st
+import pandas as pd
+import joblib
+
+# Page Config
+st.set_page_config(layout="wide")
+
+# Load Model
+model = joblib.load('churn_model.pkl')
+
+# Load Columns
+model_columns = joblib.load('model_columns.pkl')
+
+# Title
+st.title("Customer Churn Prediction")
+
+st.write("Enter customer details below 👇")
+
+
+# ------------------------
+# USER INPUTS
+# ------------------------
+
+gender = st.selectbox(
+    "Gender",
+    ["Female", "Male"]
+)
+
+senior = st.selectbox(
+    "Senior Citizen",
+    [0, 1]
+)
+
+partner = st.selectbox(
+    "Partner",
+    ["No", "Yes"]
+)
+
+dependents = st.selectbox(
+    "Dependents",
+    ["No", "Yes"]
+)
+
+tenure = st.slider(
+    "Tenure",
+    0,
+    72
+)
+
+phone = st.selectbox(
+    "Phone Service",
+    ["No", "Yes"]
+)
+
+paperless = st.selectbox(
+    "Paperless Billing",
+    ["No", "Yes"]
+)
+
+monthly = st.number_input(
+    "Monthly Charges",
+    min_value=0.0
+)
+
+total = st.number_input(
+    "Total Charges",
+    min_value=0.0
+)
+
+multiple = st.selectbox(
+    "Multiple Lines",
+    [
+        "No",
+        "Yes",
+        "No phone service"
+    ]
+)
+
+internet = st.selectbox(
+    "Internet Service",
+    [
+        "DSL",
+        "Fiber optic",
+        "No"
+    ]
+)
+
+online_security = st.selectbox(
+    "Online Security",
+    [
+        "No",
+        "Yes",
+        "No internet service"
+    ]
+)
+
+tech_support = st.selectbox(
+    "Tech Support",
+    [
+        "No",
+        "Yes",
+        "No internet service"
+    ]
+)
+
+contract = st.selectbox(
+    "Contract Type",
+    [
+        "Month-to-month",
+        "One year",
+        "Two year"
+    ]
+)
+
+payment = st.selectbox(
+    "Payment Method",
+    [
+        "Electronic check",
+        "Mailed check",
+        "Bank transfer (automatic)",
+        "Credit card (automatic)"
+    ]
+)
+
+
+# ------------------------
+# PREDICTION
+# ------------------------
+
+if st.button("Predict Churn"):
+
+    # Create empty dataframe
+    input_data = pd.DataFrame(
+        columns=model_columns
+    )
+
+    # Fill all with 0
+    input_data.loc[0] = 0
+
+    # Binary Features
+    input_data['gender'] = 1 if gender == "Male" else 0
+
+    input_data['SeniorCitizen'] = senior
+
+    input_data['Partner'] = 1 if partner == "Yes" else 0
+
+    input_data['Dependents'] = (
+        1 if dependents == "Yes" else 0
+    )
+
+    input_data['tenure'] = tenure
+
+    input_data['PhoneService'] = (
+        1 if phone == "Yes" else 0
+    )
+
+    input_data['PaperlessBilling'] = (
+        1 if paperless == "Yes" else 0
+    )
+
+    input_data['MonthlyCharges'] = monthly
+
+    input_data['TotalCharges'] = total
+
+
+    # Multiple Lines Encoding
+    if multiple == "Yes":
+        input_data[
+            'MultipleLines_Yes'
+        ] = 1
+
+    elif multiple == "No phone service":
+        input_data[
+            'MultipleLines_No phone service'
+        ] = 1
+
+
+    # Internet Service Encoding
+    if internet == "Fiber optic":
+        input_data[
+            'InternetService_Fiber optic'
+        ] = 1
+
+    elif internet == "No":
+        input_data[
+            'InternetService_No'
+        ] = 1
+
+
+    # Online Security Encoding
+    if online_security == "Yes":
+        input_data[
+            'OnlineSecurity_Yes'
+        ] = 1
+
+    elif online_security == "No internet service":
+        input_data[
+            'OnlineSecurity_No internet service'
+        ] = 1
+
+
+    # Tech Support Encoding
+    if tech_support == "Yes":
+        input_data[
+            'TechSupport_Yes'
+        ] = 1
+
+    elif tech_support == "No internet service":
+        input_data[
+            'TechSupport_No internet service'
+        ] = 1
+
+
+    # Contract Encoding
+    if contract == "One year":
+        input_data[
+            'Contract_One year'
+        ] = 1
+
+    elif contract == "Two year":
+        input_data[
+            'Contract_Two year'
+        ] = 1
+
+
+    # Payment Method Encoding
+    if payment == "Electronic check":
+        input_data[
+            'PaymentMethod_Electronic check'
+        ] = 1
+
+    elif payment == "Mailed check":
+        input_data[
+            'PaymentMethod_Mailed check'
+        ] = 1
+
+    elif payment == "Credit card (automatic)":
+        input_data[
+            'PaymentMethod_Credit card (automatic)'
+        ] = 1
+
+
+    # Prediction
+    prediction = model.predict(input_data)
+
+    probability = model.predict_proba(
+        input_data
+    )[0][1]
+
+
+    # Output
+    if prediction[0] == 1:
+
+        st.error(
+            f"Customer likely to churn 🚨\n\n"
+            f"Churn Probability: {probability:.2f}"
+        )
+
+    else:
+
+        st.success(
+            f"Customer likely to stay 💛\n\n"
+            f"Churn Probability: {probability:.2f}"
+        )

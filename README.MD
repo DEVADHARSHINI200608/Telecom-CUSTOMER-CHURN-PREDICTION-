@@ -1,3 +1,6 @@
+You can explore the live application here: 
+https://customerchurnprediction2601.streamlit.app/
+
 Customer Churn Prediction System
 Complete Interview Preparation Notes
 1. Project Title
